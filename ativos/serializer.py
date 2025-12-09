@@ -33,8 +33,9 @@ class PropostaSerializer(serializers.ModelSerializer):
                 {"error": "O precatório não disponivel para compra"}
             )
         if valor_da_oferta >= precatorio_obj.valor_face:
-            raise serializers.ValidationError({"error":"O valor oferecido não pode ser meio que o ofertado pelo credor."})
+            raise serializers.ValidationError({"error":"O valor oferecido não pode ser maior que o ofertado pelo credor."})
         
+        return data
         
 
 
