@@ -1,5 +1,5 @@
 from .serializer import PrecatorioSerializer, PropostaSerializer
-from .models import Precatorio
+from .models import Precatorio, Proposta
 from django.contrib.auth import get_user_model
 from rest_framework import viewsets
 from rest_framework.views import APIView
@@ -22,7 +22,7 @@ class PrecatorioViewSet(viewsets.ModelViewSet):
             return queryset.all()
         elif user.tipo_usuario == User.Perfil.CREDOR:
             return queryset.filter(dono=user)
-        elif user.tipo_user == User.Perfil.INVESTIDOR:
+        elif user.tipo_usuario == User.Perfil.INVESTIDOR:
             return queryset.filter(status=Precatorio.Status.DISPONIVEL) 
         else:
             return Precatorio.objects.none()
@@ -47,7 +47,6 @@ class AprovarPrecatorioBulkView(APIView):
             {"result":f"Foram aprovados: {precatorios} precatórios"}, 
             status=status.HTTP_200_OK)
 
-
 class PropostaPrecatorioAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -59,12 +58,15 @@ class PropostaPrecatorioAPIView(APIView):
         
         serializer = PropostaSerializer(data=request.data, context={'request':request})
         serializer.is_valid(raise_exception=True)
-        serializer.save(insvestidor=user)
-        return Response()        
+        serializer.save(investidor=user)
+        return Response(serializer.data, status=status.HTTP_200_OK)       
         
+class GerenciarPropostaViewAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        user = request.user
         
-
         
          
 
