@@ -1,10 +1,11 @@
-from .serializer import PrecatorioSerializer
+from .serializer import PrecatorioSerializer, PropostaSerializer
 from .models import Precatorio
 from django.contrib.auth import get_user_model
 from rest_framework import viewsets
+from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
-# from rest_framework.response import Response
-# from rest_framework import status
+from rest_framework.response import Response
+from rest_framework import status
 
 User = get_user_model()
 
@@ -25,7 +26,99 @@ class PrecatorioViewSet(viewsets.ModelViewSet):
             return queryset.filter(status=Precatorio.Status.DISPONIVEL) 
         else:
             return Precatorio.objects.none()
+
+class AprovarPrecatorioBulkView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        user = request.user
         
+        if not (user.tipo_usuario == User.Perfil.ANALISTA or user.is_superuser):
+            return Response({"error":"Somente analistas são autorizados."}, status=status.HTTP_403_FORBIDDEN)
+        
+        ids = request.data.get("ids",[])
+        if not ids:
+            return Response({"error":"Lista de IDs não enviada"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        precatorios = Precatorio.objects.filter(
+            id__in=ids, status=Precatorio.Status.PENDENTE
+            ).update(status=Precatorio.Status.DISPONIVEL)
+        return Response(
+            {"result":f"Foram aprovados: {precatorios} precatórios"}, 
+            status=status.HTTP_200_OK)
+
+
+class PropostaPrecatorioAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        if not (user.tipo_usuario == User.Perfil.INVESTIDOR):
+            return Response({"error":"Somente Investidores podem realzar ações de compra."}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = PropostaSerializer(data=request.data, context={'request':request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save(insvestidor=user)
+        return Response()        
+        
+
+        
+
+        
+         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # class PrecatorioViewSet(viewsets.ModelViewSet):
 #     permission_classes = [IsAuthenticated]
 #     serializer_class = PrecatorioSerializer
@@ -79,8 +172,8 @@ class PrecatorioViewSet(viewsets.ModelViewSet):
     é isso :D
     """
     
-            
-         
+
+
 
 
 

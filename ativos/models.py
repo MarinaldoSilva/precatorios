@@ -1,12 +1,14 @@
 from django.db import models
 from django.conf import settings
+from uuid import uuid4
 
 class Precatorio(models.Model):
     class Status(models.IntegerChoices):
         PENDENTE = 1, "Pendente"
         DISPONIVEL = 2, "Disponivel"
         VENDIDO = 3, "Vendido"
-    
+
+    id = models.UUIDField(primary_key=True, default=uuid4, unique=True, editable=False)
     titulo = models.CharField(max_length=150)
     valor_face = models.DecimalField(max_digits=12, decimal_places=2)
     valor_inicial = models.DecimalField(max_digits=12, decimal_places=2)
@@ -30,4 +32,4 @@ class Proposta(models.Model):
     status = models.SmallIntegerField(choices=Status.choices, default=Status.AGUARDANDO, db_index=True)
 
     def __str__(self):
-        return f"Proposta do investidor {self.investidor} para o precatório {self.precatorio}"
+        return f"Proposta de {self.investidor} - Precatório {self.precatorio}"
