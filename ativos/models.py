@@ -1,6 +1,8 @@
-from django.db import models
-from django.conf import settings
 from uuid import uuid4
+
+from django.conf import settings
+from django.db import models
+
 
 class Precatorio(models.Model):
     class Status(models.IntegerChoices):
@@ -13,11 +15,12 @@ class Precatorio(models.Model):
     valor_face = models.DecimalField(max_digits=12, decimal_places=2)
     valor_inicial = models.DecimalField(max_digits=12, decimal_places=2)
     tribunal = models.CharField(max_length=50)
-    status = models.SmallIntegerField(choices = Status.choices, default=Status.PENDENTE, db_index=True)
-    dono = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='precatorios')
+    status = models.SmallIntegerField(choices=Status.choices, default=Status.PENDENTE, db_index=True)
+    dono = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="precatorios")
 
     def __str__(self):
         return f"{self.titulo} - R$ {self.valor_inicial}"
+
 
 class Proposta(models.Model):
     class Status(models.IntegerChoices):
@@ -27,7 +30,7 @@ class Proposta(models.Model):
 
     id = models.UUIDField(editable=False, unique=True, default=uuid4, primary_key=True)
     precatorio = models.ForeignKey(Precatorio, on_delete=models.CASCADE, related_name="propostas")
-    investidor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='propostas')
+    investidor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="propostas")
     valor_oferta = models.DecimalField(max_digits=10, decimal_places=2)
     data_criacao = models.DateTimeField(auto_now_add=True)
     status = models.SmallIntegerField(choices=Status.choices, default=Status.AGUARDANDO, db_index=True)
