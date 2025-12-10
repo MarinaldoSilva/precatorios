@@ -1,5 +1,6 @@
-from .models import User
 from rest_framework import serializers
+
+from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -7,20 +8,16 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = "__all__"
 
-        read_only_fields = ['id']
+        read_only_fields = ["id"]
 
-        extra_kwargs = {
-            "password":{
-                "write_only": True
-            }
-        }
+        extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
         return user
-    
+
     def update(self, instance, validated_data):
-        password = validated_data.pop('password', None)
+        password = validated_data.pop("password", None)
         if password:
             instance.set_password(password)
         return super().update(instance, validated_data)
