@@ -25,6 +25,7 @@ class Proposta(models.Model):
         ACEITA = 2, "Aceita"
         RECUSADA = 3, "Recusada"
 
+    id = models.UUIDField(editable=False, unique=True, default=uuid4, primary_key=True)
     precatorio = models.ForeignKey(Precatorio, on_delete=models.CASCADE, related_name="propostas")
     investidor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='propostas')
     valor_oferta = models.DecimalField(max_digits=10, decimal_places=2)
