@@ -1,5 +1,6 @@
 from .serializer import PrecatorioSerializer, PropostaSerializer
-from .models import Precatorio, Proposta
+from .models import Precatorio
+from ativos.service import PropostaService
 from django.contrib.auth import get_user_model
 from rest_framework import viewsets
 from rest_framework.views import APIView
@@ -66,6 +67,25 @@ class GerenciarPropostaViewAPIView(APIView):
 
     def post(self, request):
         user = request.user
+        
+        if not (user.tipo_usuario == User.Perfil.CREDOR or user.is_superuser):
+            return Response(
+                {"error":"Somente credores podem aceitar propostas."}, 
+                status=status.HTTP_403_FORBIDDEN)
+
+        proposta_id = request.data.get("proposta_id")
+        acao = request.data.get("acao").upper()
+        
+        service = PropostaService(user)
+
+        proposta, error = service.resposta_proposta(proposta_id=proposta_id, acao=acao) 
+
+        if error:
+            return Response({"error": error}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"result": proposta}, status=status.HTTP_200_OK)
+
+        
+        
         
         
          
