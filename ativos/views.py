@@ -126,6 +126,34 @@ class GerenciarPropostaViewAPIView(APIView):
         if error:
             return Response({"error": error}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"result": proposta}, status=status.HTTP_200_OK)
+
+class RecomendacoesPropostaAPIView(APIView):
+    
+    @extend_schema(
+            summary="Melhores precatórios (Deságio)",
+            description="Top 5 de melhores precatórios com base no valor de deságio",
+            tags=['Recomendações'],
+            responses={
+                200: PrecatorioSerializer
+            }
+    )
+    def get(self, request):
+        user = request.user
+        service = RecomendacaoService(user=user)
+        melhores_recomendacoes = service.buscar_oportunidades()
+
+        serializer = PrecatorioSerializer(melhores_recomendacoes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+
 {
         # class PrecatorioViewSet(viewsets.ModelViewSet):
     #     permission_classes = [IsAuthenticated]
@@ -156,22 +184,5 @@ class GerenciarPropostaViewAPIView(APIView):
     #         return Response({"results": serializer.data},status=status.HTTP_200_OK)}
 }
 
-class RecomendacoesPropostaAPIView(APIView):
-    
-    @extend_schema(
-            summary="Melhores precatórios (Deságio)",
-            description="Top 5 de melhores precatórios com base no valor de deságio",
-            tags=['Recomendações'],
-            responses={
-                200: PrecatorioSerializer
-            }
-    )
-    def get(self, request):
-        user = request.user
-        service = RecomendacaoService(user=user)
-        melhores_recomendacoes = service.buscar_oportunidades()
-
-        serializer = PrecatorioSerializer(melhores_recomendacoes, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
