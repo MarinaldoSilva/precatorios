@@ -1,3 +1,5 @@
+Esse documento foi gerado por IA pra testar a aplicação.
+
 ## 1. Criar os Usuários (Sign Up)
 
 Vamos criar os 3 perfis necessários para o teste.
@@ -5,7 +7,9 @@ Vamos criar os 3 perfis necessários para o teste.
 **Rota:** `POST http://127.0.0.1:8000/api/v1/auth/register/`
 
 ### 1.1 Criar Credor
+
 **Payload:**
+
 ```json
 {
   "username": "credor_teste",
@@ -87,7 +91,7 @@ Payload:
 JSON
 
 {
-  "ids": ["COLE_O_UUID_PRECATORIO_AQUI"]
+  "ids": ["UUID DO PRECATÓRIO"]
 }
 Resultado Esperado: 200 OK. Mensagem: "Foram aprovados: 1 precatórios".
 
@@ -126,3 +130,4 @@ JSON
   "acao": "ACEITAR"
 }
 Resultado Esperado: 200 OK. Mensagem: "Venda do precatório realizada com sucesso."
+```
