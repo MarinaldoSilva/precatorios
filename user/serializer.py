@@ -4,9 +4,19 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+
+    tipo_usuario = serializers.CharField(source="get_tipo_usuario_display", read_only=True)
     class Meta:
         model = User
-        fields = "__all__"
+        fields = [
+            "id",
+            "is_superuser",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "tipo_usuario",
+        ]
 
         read_only_fields = ["id"]
 
