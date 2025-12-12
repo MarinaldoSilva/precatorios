@@ -7,7 +7,7 @@ from .models import Precatorio, Proposta
 
 class PrecatorioSerializer(serializers.ModelSerializer):
     dono = UserSerializer(read_only=True)
-
+    status = serializers.CharField(source="get_status_display", read_only=True)
     lucro_esperado = serializers.SerializerMethodField()
     percentual_lucro = serializers.SerializerMethodField()
     class Meta:
@@ -17,6 +17,8 @@ class PrecatorioSerializer(serializers.ModelSerializer):
             "titulo",
             "valor_face",
             "valor_inicial",
+            "lucro_esperado",
+            "percentual_lucro",
             "tribunal",
             "status",
             "dono"
