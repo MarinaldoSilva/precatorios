@@ -1,13 +1,12 @@
 from django.contrib.auth import get_user_model
 
-# Importações do Swagger
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ativos.service import PropostaService
+from ativos.services.service import PropostaService, RecomendacaoService
 
 from .models import Precatorio
 from .serializer import PrecatorioSerializer, PropostaSerializer
@@ -127,8 +126,8 @@ class GerenciarPropostaViewAPIView(APIView):
         if error:
             return Response({"error": error}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"result": proposta}, status=status.HTTP_200_OK)
-
-    # class PrecatorioViewSet(viewsets.ModelViewSet):
+{
+        # class PrecatorioViewSet(viewsets.ModelViewSet):
     #     permission_classes = [IsAuthenticated]
     #     serializer_class = PrecatorioSerializer
 
@@ -154,4 +153,25 @@ class GerenciarPropostaViewAPIView(APIView):
 
     #         serializer = self.get_serializer(queryset, many=True)
 
-    #         return Response({"results": serializer.data},status=status.HTTP_200_OK)
+    #         return Response({"results": serializer.data},status=status.HTTP_200_OK)}
+}
+
+class RecomendacoesPropostaAPIView(APIView):
+    
+    @extend_schema(
+            summary="Melhores precatórios (Deságio)",
+            description="Top 5 de melhores precatórios com base no valor de deságio",
+            tags=['Recomendações'],
+            responses={
+                200: PrecatorioSerializer
+            }
+    )
+    def get(self, request):
+        user = request.user
+        service = RecomendacaoService(user=user)
+        melhores_recomendacoes = service.buscar_oportunidades()
+
+        serializer = PrecatorioSerializer(melhores_recomendacoes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
