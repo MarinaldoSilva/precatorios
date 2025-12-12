@@ -183,3 +183,6 @@ class RecomendacoesPropostaAPIView(APIView):
 
     #         return Response({"results": serializer.data},status=status.HTTP_200_OK)}
 }
+
+
+
