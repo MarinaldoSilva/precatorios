@@ -7,10 +7,7 @@ from django.db import models
 class User(AbstractUser):
 
     class Perfil(models.IntegerChoices):
-        CREDOR = (
-            1,
-            "Credor",
-        )
+        CREDOR = 1,"Credor",
         INVESTIDOR = 2, "Investidor"
         ANALISTA = 3, "Analista"
 
