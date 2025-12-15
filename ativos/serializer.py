@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from decimal import Decimal
+
 from user.serializer import UserSerializer
 
 from .models import Precatorio, Proposta
@@ -10,28 +10,19 @@ class PrecatorioSerializer(serializers.ModelSerializer):
     status = serializers.CharField(source="get_status_display", read_only=True)
     lucro_esperado = serializers.SerializerMethodField()
     percentual_lucro = serializers.SerializerMethodField()
+
     class Meta:
         model = Precatorio
-        fields = [
-            "id",
-            "titulo",
-            "valor_face",
-            "valor_inicial",
-            "lucro_esperado",
-            "percentual_lucro",
-            "tribunal",
-            "status",
-            "dono"
-        ]
+        fields = ["id", "titulo", "valor_face", "valor_inicial", "lucro_esperado", "percentual_lucro", "tribunal", "status", "dono"]
 
         read_only_fields = ["id", "dono", "status"]
 
     def get_lucro_esperado(self, obj: Precatorio):
         return obj.valor_face - obj.valor_inicial
-    
+
     def get_percentual_lucro(self, obj: Precatorio):
         if obj.valor_face > 0:
-            lucro_percentual = ((obj.valor_face - obj.valor_inicial) / (obj.valor_face) * 100)
+            lucro_percentual = (obj.valor_face - obj.valor_inicial) / (obj.valor_face) * 100
             calculo = round(lucro_percentual, 2)
 
             if calculo % 1 == 0:
@@ -48,14 +39,8 @@ class PrecatorioSerializer(serializers.ModelSerializer):
 class PropostaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Proposta
-        fields = [
-            "id",
-            "precatorio",
-            "valor_oferta",
-            "data_criacao",
-            "status"
-            ]
-        
+        fields = ["id", "precatorio", "valor_oferta", "data_criacao", "status"]
+
         read_only_fields = ["id", "investidor", "data_criacao", "status"]
 
     def validate(self, data):
