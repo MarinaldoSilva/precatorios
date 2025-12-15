@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from django.db import DatabaseError # Para pegar erros de conexão com banco
 
 from user.serializer import UserSerializer
 
@@ -19,13 +20,36 @@ class SignUp(APIView):
         summary="Registrar novo usuário",
         description="Cria uma nova conta de usuário (Credor, Investidor ou Analista).",
         request=UserSerializer,
-        responses={201: UserSerializer},
+        responses={
+            201: UserSerializer,
+            400: inline_serializer(name="ValidationError", fields={"errors": serializers.DictField()}),
+            500: inline_serializer(name="ServerError", fields={"error": serializers.CharField()})
+        },
     )
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        return Response({"username": user.username, "email": user.email})
+        try:
+            serializer = UserSerializer(data=request.data)
+        
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            user = serializer.save()
+            
+            return Response(
+                {"username": user.username, "email": user.email, "tipo_usuario": user.get_tipo_usuario_display()}, 
+                status=status.HTTP_201_CREATED
+            )
+            
+        except DatabaseError as e:
+            return Response(
+                {"error": "Erro ao conectar com o banco de dados.", "detail": str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
+        except Exception as e:
+            return Response(
+                {"error": "Erro interno do servidor ao cadastrar usuário.", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class SignIn(APIView):
@@ -53,37 +77,50 @@ class SignIn(APIView):
                 },
             ),
             401: inline_serializer(name="LoginError", fields={"error": serializers.CharField()}),
+            500: inline_serializer(name="LoginServerError", fields={"error": serializers.CharField()})
         },
     )
     def post(self, request):
-        email = request.data.get("email")
-        password = request.data.get("password")
-
         try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response(
-                {"email_not_found": "Email não encontrado na base de dados"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        if user.check_password(password):
-            refresh_token = TokenObtainPairSerializer.get_token(user=user)
-            token_access = refresh_token.access_token
+            email = request.data.get("email")
+            password = request.data.get("password")
 
+            if not email or not password:
+                 return Response(
+                    {"error": "Email e senha são obrigatórios."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return Response(
+                    {"error": "Credenciais inválidas."}, 
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            if user.check_password(password):
+                refresh_token = TokenObtainPairSerializer.get_token(user=user)
+                token_access = refresh_token.access_token
+
+                return Response(
+                    {
+                        "access": str(token_access),
+                        "refresh": str(refresh_token),
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+            
             return Response(
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email,
-                    "access": str(token_access),
-                    "refresh": str(refresh_token),
-                },
-                status.HTTP_201_CREATED,
+                {"error": "Credenciais inválidas."},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
-        return Response(
-            {"error": "Verifique o Email ou senha e tente novamente."},
-            status.HTTP_401_UNAUTHORIZED,
-        )
+
+        except Exception as e:
+            return Response(
+                {"error": "Erro interno ao realizar login.", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class SignOut(APIView):
@@ -96,18 +133,27 @@ class SignOut(APIView):
         responses={205: None},
     )
     def post(self, request):
-        token_refresh = request.data.get("refresh")
-        if not token_refresh:
-            return Response(
-                {"error_token": "O token de acesso não foi localizado"},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
         try:
+            token_refresh = request.data.get("refresh")
+            
+            if not token_refresh:
+                return Response(
+                    {"error": "O token de refresh é obrigatório."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            
             token = RefreshToken(token_refresh)
             token.blacklist()
+            
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+
         except TokenError:
             return Response(
-                {"erro": "Não foi possível invalidar o token"},
+                {"error": "Token inválido ou expirado."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(
+                {"error": "Erro ao realizar logout.", "detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
