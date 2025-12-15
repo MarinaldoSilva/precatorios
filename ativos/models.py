@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import uuid4
 
 from django.conf import settings
@@ -17,6 +18,7 @@ class Precatorio(models.Model):
     tribunal = models.CharField(max_length=50)
     status = models.SmallIntegerField(choices=Status.choices, default=Status.PENDENTE, db_index=True)
     dono = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="precatorios")
+    comissao = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00') ,verbose_name="Valor comissão")
 
     def __str__(self):
         return f"{self.titulo} - R$ {self.valor_inicial}"
