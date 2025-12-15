@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status, viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -27,7 +26,7 @@ class PrecatorioViewSet(viewsets.ModelViewSet):
             return queryset.all()
         elif user.tipo_usuario == User.Perfil.CREDOR:
             return queryset.filter(dono=user)
-        elif user.tipo_usuario == User.Perfil.INVESTIDOR:  # Corrigi o typo 'tipo_user' que vi no seu código anterior
+        elif user.tipo_usuario == User.Perfil.INVESTIDOR:
             return queryset.filter(status=Precatorio.Status.DISPONIVEL)
         else:
             return Precatorio.objects.none()
@@ -79,7 +78,7 @@ class PropostaPrecatorioAPIView(APIView):
     )
     def post(self, request):
         user = request.user
-
+        service = PropostaService(user=user)
         if not (user.tipo_usuario == User.Perfil.INVESTIDOR):
             return Response(
                 {"error": "Somente Investidores podem realzar ações de compra."},
@@ -88,8 +87,10 @@ class PropostaPrecatorioAPIView(APIView):
 
         serializer = PropostaSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
-        serializer.save(investidor=user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        #service já cria a salva, recuperamos o valor e serializamos novamente, com o novo serializar feito, os dados novos serão salvos no banco e podemos retornar na resposta da api
+        nova_proposta = service.criar_proposta(validated_data=serializer.validated_data)
+        proposta = PropostaSerializer(nova_proposta).data
+        return Response(proposta, status=status.HTTP_201_CREATED)
 
 
 class GerenciarPropostaViewAPIView(APIView):
@@ -127,16 +128,10 @@ class GerenciarPropostaViewAPIView(APIView):
             return Response({"error": error}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"result": proposta}, status=status.HTTP_200_OK)
 
+
 class RecomendacoesPropostaAPIView(APIView):
-    
-    @extend_schema(
-            summary="Melhores precatórios (Deságio)",
-            description="Top 5 de melhores precatórios com base no valor de deságio",
-            tags=['Recomendações'],
-            responses={
-                200: PrecatorioSerializer
-            }
-    )
+
+    @extend_schema(summary="Melhores precatórios (Deságio)", description="Top 5 de melhores precatórios com base no valor de deságio", tags=["Recomendações"], responses={200: PrecatorioSerializer})
     def get(self, request):
         user = request.user
         service = RecomendacaoService(user=user)
@@ -146,43 +141,24 @@ class RecomendacoesPropostaAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-
-
-
-
-
-
-
-
 {
-        # class PrecatorioViewSet(viewsets.ModelViewSet):
+    # class PrecatorioViewSet(viewsets.ModelViewSet):
     #     permission_classes = [IsAuthenticated]
     #     serializer_class = PrecatorioSerializer
-
     #     def get_queryset(self):
     #         user = self.request.user
     #         queryset = Precatorio.objects.select_related('dono')
-
     #         if user.is_superuser:
     #             return queryset.all()
-
     #         user_filter = {
     #             "ANALISTA": lambda: queryset.all(),
     #             "CREDOR": lambda: queryset.filter(dono=user),
     #             "INVESTIDOR": lambda: queryset.filter(status=Precatorio.Status.DISPONIVEL)
     #         }
-
     #         filtro_role = user_filter.get(user.tipo_usuario, lambda: queryset.none())
-
     #         return filtro_role()
-
     #     def list(self, request, *args, **kwargs):
     #         queryset = self.filter_queryset(self.get_queryset())
-
     #         serializer = self.get_serializer(queryset, many=True)
-
     #         return Response({"results": serializer.data},status=status.HTTP_200_OK)}
 }
-
-
-
