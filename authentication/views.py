@@ -6,8 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-from django.db import DatabaseError # Para pegar erros de conexão com banco
-
+from django.db import DatabaseError
 from user.serializer import UserSerializer
 
 User = get_user_model()
@@ -154,6 +153,6 @@ class SignOut(APIView):
             )
         except Exception as e:
             return Response(
-                {"error": "Erro ao realizar logout.", "detail": str(e)},
+                {"error": "Erro ao sair do sistemas.", "detail": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
