@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models import Sum
 
 from ativos.models import Precatorio, Proposta
-
+from ativos.services.utils import PrecatorioUtils
 from .base_service import BaseUserService
 
 class PropostaService(BaseUserService):
@@ -54,7 +54,7 @@ class PropostaService(BaseUserService):
             proposta.status = Proposta.Status.RECUSADA
             proposta.save()
             return "Proposta recusada", None
-        return None, "Ação invalida, aceita somente ACEITAR e RECUSAR"
+        return None, "Ação invalida, somente os valores de 'ACEITAR e RECUSAR'"
 
 
 class RecomendacaoService(BaseUserService):
@@ -82,5 +82,23 @@ class RecomendacaoService(BaseUserService):
 
 
 class GestaoAtivosService(BaseUserService):
-    def verificar_dados_ativos(self, validated_data):
-        ...
+
+    def saneamento_e_comissao(self, validated_data):
+        
+        dados_limpos = {
+            key : value.strip() if isinstance(value, str) else value
+            for key, value in validated_data.items()
+        }
+
+        dados_limpos['titulo'] = dados_limpos.get('titulo','').title()
+        dados_limpos['tribunal'] = dados_limpos.get('tribunal','').upper()
+
+        valor_face = validated_data.get("valor_face", Decimal("0.00"))
+
+        valor_comissao = PrecatorioUtils.calculo_comissao(valor_face)
+
+        dados_limpos['comissao'] = valor_comissao 
+        dados_limpos['dono'] = self.user
+        precatorio = Precatorio.objects.create(**dados_limpos)
+        return precatorio
+        

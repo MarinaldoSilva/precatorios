@@ -1,9 +1,8 @@
 from rest_framework import serializers
-
 from user.serializer import UserSerializer
 
 from .models import Precatorio, Proposta
-
+from user.models import User
 
 class PrecatorioSerializer(serializers.ModelSerializer):
     dono = UserSerializer(read_only=True)
@@ -13,10 +12,32 @@ class PrecatorioSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Precatorio
-        fields = ["id", "titulo", "valor_face", "valor_inicial", "lucro_esperado", "percentual_lucro", "tribunal", "status", "dono"]
+        fields = ["id", "titulo", "valor_face", "valor_inicial", "lucro_esperado", "percentual_lucro", "tribunal", "status", "dono", "comissao"]
 
-        read_only_fields = ["id", "dono", "status"]
+        read_only_fields = ["id", "dono", "status", "comissao"]
 
+
+    def to_representation(self, instance):
+        """
+        Este método é chamado AUTOMATICAMENTE no DRF toda vez que ele
+        precisa transformar o objeto do banco em JSON para responder alguém.
+        """
+        #usuário do contexto na requisição
+        request = self.context.get('request')
+        #metodo padrão para criar um dicionário completo com todos os campos
+        data = super().to_representation(instance)
+
+        #agora sabemos que request.user existe
+        user = request.user
+
+        if not request or hasattr(request, 'user'):
+            return data
+        
+        if user.is_authenticated and user.tipo_usuario == User.Perfil.INVESTIDOR:
+            data.pop('comissao', None)
+
+        return data
+    
     def get_lucro_esperado(self, obj: Precatorio):
         return obj.valor_face - obj.valor_inicial
 

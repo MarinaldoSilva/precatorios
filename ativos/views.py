@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ativos.services.service import PropostaService, RecomendacaoService
+from ativos.services.service import PropostaService, RecomendacaoService, GestaoAtivosService
 
 from .models import Precatorio
 from .serializer import PrecatorioSerializer, PropostaSerializer
@@ -17,6 +17,18 @@ User = get_user_model()
 class PrecatorioViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = PrecatorioSerializer
+
+    def create(self, request, *args, **kwargs):
+        
+        serializer = PrecatorioSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        serivice = GestaoAtivosService(user=request.user)
+        novo_precatorio = serivice.saneamento_e_comissao(validated_data=serializer.validated_data)
+        #context para que o to_representation possa pegar o contexto e verificar o tipo de user para a resposta
+        novo_precatorio_serializado = PrecatorioSerializer(novo_precatorio, context={'request':request}).data
+        return Response(novo_precatorio_serializado, status=status.HTTP_201_CREATED)
+    
 
     def get_queryset(self):
         user = self.request.user
@@ -139,6 +151,7 @@ class RecomendacoesPropostaAPIView(APIView):
 
         serializer = PrecatorioSerializer(melhores_recomendacoes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 {
