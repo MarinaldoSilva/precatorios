@@ -267,6 +267,19 @@ Retorno da solicitação:
 }
 ```
 
+### Recomendações de Precatórios
+
+Os precatórios com pelo menos 20% de deságio estão sendo recomendados para os investidores.
+
+```http
+[Rota URL](http://127.0.0.1:8000/api/v1/ativos/precatorio/gerenciar/propostas/recomendacoes/)
+```
+
+```json
+
+```
+
+
 ### Documentação
 
 A documentação foi gerada com o Swagger, assim a visualização dos dados será mais amigável.
