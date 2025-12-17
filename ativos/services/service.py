@@ -83,7 +83,7 @@ class RecomendacaoService(BaseUserService):
 
 class GestaoAtivosService(BaseUserService):
 
-    def saneamento_e_comissao(self, validated_data):
+    def precatorio_e_comissao(self, validated_data):
         
         dados_limpos = {
             key : value.strip() if isinstance(value, str) else value

@@ -24,11 +24,14 @@ class PrecatorioViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         serivice = GestaoAtivosService(user=request.user)
-        novo_precatorio = serivice.saneamento_e_comissao(validated_data=serializer.validated_data)
-        #context para que o to_representation possa pegar o contexto e verificar o tipo de user para a resposta
-        novo_precatorio_serializado = PrecatorioSerializer(novo_precatorio, context={'request':request}).data
-        return Response(novo_precatorio_serializado, status=status.HTTP_201_CREATED)
-    
+        try:
+            novo_precatorio = serivice.precatorio_e_comissao(validated_data=serializer.validated_data)
+            #context para que o to_representation possa pegar o contexto e verificar o tipo de user para a resposta
+            novo_precatorio_serializado = PrecatorioSerializer(novo_precatorio, context={'request':request}).data
+            return Response(novo_precatorio_serializado, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error':f'detail:{e}'}, status=status.HTTP_400_BAD_REQUEST)
+        
 
     def get_queryset(self):
         user = self.request.user

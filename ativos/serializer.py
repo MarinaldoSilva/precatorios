@@ -1,3 +1,4 @@
+from decimal import Decimal
 from rest_framework import serializers
 from user.serializer import UserSerializer
 
@@ -16,24 +17,32 @@ class PrecatorioSerializer(serializers.ModelSerializer):
 
         read_only_fields = ["id", "dono", "status", "comissao"]
 
+    def validate(self, data):
+        valor_face = data.get('valor_face', Decimal('0.00'))
+        valor_inicial = data.get('valor_inicial', Decimal('0.00'))
+
+        if valor_face and valor_inicial:
+            if valor_inicial >= valor_face:
+                raise serializers.ValidationError({'errors':'A proposta inicial não pode ser maior que o valor do ativo.'})
+        
+        if valor_face and valor_inicial <= 0:
+            raise serializers.ValidationError({'erros':'O valor do ativo e/ou valor da proposta devem ser positivos.'})
 
     def to_representation(self, instance):
         """
         Este método é chamado AUTOMATICAMENTE no DRF toda vez que ele
-        precisa transformar o objeto do banco em JSON para responder alguém.
+        precisa transformar o objeto do banco em JSON para retornar para a view.
         """
-        #usuário do contexto na requisição
-        request = self.context.get('request')
         #metodo padrão para criar um dicionário completo com todos os campos
         data = super().to_representation(instance)
 
+        #usuário do contexto na requisição
+        request = self.context.get('request')
+
         #agora sabemos que request.user existe
         user = request.user
-
-        if not request or hasattr(request, 'user'):
-            return data
         
-        if user.is_authenticated and user.tipo_usuario == User.Perfil.INVESTIDOR:
+        if user.is_authenticated and (user.tipo_usuario == User.Perfil.INVESTIDOR or user.tipo_usuario == User.Perfil.CREDOR):
             data.pop('comissao', None)
 
         return data
